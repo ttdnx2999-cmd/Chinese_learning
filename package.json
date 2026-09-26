@@ -1,0 +1,24 @@
+{
+  "name": "chinese-learning-app",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "dev:backend": "npm run dev -w @chinese-learning-app/backend",
+    "dev:backend:full": "npm run dev:full -w @chinese-learning-app/backend",
+    "dev:frontend": "npm run dev -w @chinese-learning-app/frontend",
+    "dev:ios": "npm run start -w @chinese-learning-app/ios-app",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f libretranslate",
+    "build": "npm run build -w @chinese-learning-app/backend && npm run build -w @chinese-learning-app/frontend",
+    "test": "npm run test --workspaces",
+    "test:backend": "npm run test -w @chinese-learning-app/backend"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
