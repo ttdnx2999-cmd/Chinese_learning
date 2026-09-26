@@ -1,3 +1,4 @@
+import StudyActions from '../components/StudyActions';
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -103,34 +104,34 @@ export default function ChapterFlashcardPage() {
     }
   };
 
-  const fetchRandomWord = async () => {
+  const fetchRandomWord = async (reset = false) => {
     if (!usernameForAPI) return;
     setLoading(true);
     setError(null);
     setShowDetails(false);
     setNoWords(false);
-    
+
     try {
       if (algorithm === 'shuffled') {
         // Shuffled algorithm: fetch all words once and serve in order
-        if (shuffledWords.length === 0 || currentIndex >= shuffledWords.length) {
+        if (reset || shuffledWords.length === 0 || currentIndex >= shuffledWords.length) {
           // Fetch all words
           let url = `/${usernameForAPI}/vocabulary`;
           const params = new URLSearchParams();
-          
+
           if (selectedChapterLabel) {
             params.append('chapterLabel', selectedChapterLabel);
           } else {
             params.append('chapterStart', chapterStart.toString());
             params.append('chapterEnd', chapterEnd.toString());
           }
-          
+
           if (params.toString()) {
             url += `?${params.toString()}`;
           }
-          
+
           const response = await apiClient.get<VocabularyEntry[]>(url);
-          
+
           if (response.data.length === 0) {
             setNoWords(true);
             if (selectedChapterLabel) {
@@ -141,11 +142,15 @@ export default function ChapterFlashcardPage() {
             setLoading(false);
             return;
           }
-          
+
           // Shuffle the array
-          const shuffled = [...response.data].sort(() => Math.random() - 0.5);
+          const shuffled = [...response.data];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
           setShuffledWords(shuffled);
-          setCurrentIndex(0);
+          setCurrentIndex(1);
           setCurrentWord(shuffled[0]);
           setShowSettings(false);
         } else {
@@ -157,18 +162,18 @@ export default function ChapterFlashcardPage() {
         // Random algorithm: fetch random word each time
         let url = `/${usernameForAPI}/vocabulary/chapters/random`;
         const params = new URLSearchParams();
-        
+
         if (selectedChapterLabel) {
           params.append('chapterLabel', selectedChapterLabel);
         } else {
           params.append('chapterStart', chapterStart.toString());
           params.append('chapterEnd', chapterEnd.toString());
         }
-        
+
         if (params.toString()) {
           url += `?${params.toString()}`;
         }
-        
+
         const response = await apiClient.get<VocabularyEntry>(url);
         setCurrentWord(response.data);
         setShowSettings(false);
@@ -197,14 +202,10 @@ export default function ChapterFlashcardPage() {
     // Reset shuffled state when starting
     setShuffledWords([]);
     setCurrentIndex(0);
-    fetchRandomWord();
+    fetchRandomWord(true);
   };
 
-  const handleShowDetails = () => {
-    setShowDetails(true);
-  };
-
-  const handleNext = () => {
+const handleNext = () => {
     fetchRandomWord();
   };
 
@@ -213,10 +214,10 @@ export default function ChapterFlashcardPage() {
 
     if ('speechSynthesis' in window) {
       setPlaying(true);
-      
+
       // Cancel any ongoing speech
       window.speechSynthesis.cancel();
-      
+
       // Longer delay to ensure cancellation is complete and speech synthesis is ready
       setTimeout(() => {
         const utterance = new SpeechSynthesisUtterance(currentWord.chineseCharacter);
@@ -228,11 +229,11 @@ export default function ChapterFlashcardPage() {
         utterance.onend = () => {
           setPlaying(false);
         };
-        
+
         utterance.onerror = (event) => {
           console.error('Speech synthesis error:', event);
           setPlaying(false);
-          
+
           // More specific error messages
           if (event.error === 'network') {
             alert('Network error. Please check your connection.');
@@ -336,9 +337,9 @@ export default function ChapterFlashcardPage() {
   };
 
   return (
-    <div style={{
+    <div className="study-page" style={{
       padding: '10px 16px',
-      paddingTop: '56px',
+      paddingTop: '0px',
       maxWidth: '800px',
       margin: '0 auto',
       height: '100dvh',
@@ -358,12 +359,12 @@ export default function ChapterFlashcardPage() {
           maxWidth: '500px',
           padding: '30px',
           backgroundColor: 'white',
-          border: '2px solid #007bff',
+          border: '2px solid #176b5c',
           borderRadius: '12px',
           boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
         }}>
           <h2 style={{ marginTop: 0, marginBottom: '20px', textAlign: 'center' }}>Select Chapters</h2>
-          
+
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
               Chapter Label:
@@ -392,7 +393,7 @@ export default function ChapterFlashcardPage() {
             </div>
           </div>
 
-          <div style={{ 
+          <div style={{
             marginBottom: '20px',
             opacity: selectedChapterLabel ? 0.5 : 1,
             pointerEvents: selectedChapterLabel ? 'none' : 'auto'
@@ -418,7 +419,7 @@ export default function ChapterFlashcardPage() {
             </select>
           </div>
 
-          <div style={{ 
+          <div style={{
             marginBottom: '25px',
             opacity: selectedChapterLabel ? 0.5 : 1,
             pointerEvents: selectedChapterLabel ? 'none' : 'auto'
@@ -463,7 +464,7 @@ export default function ChapterFlashcardPage() {
               <option value="shuffled">🔀 Shuffled Order (covers all)</option>
             </select>
             <div style={{ fontSize: '13px', color: '#666', marginTop: '5px' }}>
-              {algorithm === 'random' 
+              {algorithm === 'random'
                 ? 'Each word is randomly selected - words may repeat before all are seen'
                 : 'All words shuffled once - each word shown exactly once per pass'}
             </div>
@@ -488,7 +489,7 @@ export default function ChapterFlashcardPage() {
             style={{
               width: '100%',
               padding: '15px',
-              backgroundColor: '#007bff',
+              backgroundColor: '#176b5c',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -524,7 +525,7 @@ export default function ChapterFlashcardPage() {
             onClick={handleChangeSettings}
             style={{
               padding: '10px 20px',
-              backgroundColor: '#007bff',
+              backgroundColor: '#176b5c',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -546,14 +547,14 @@ export default function ChapterFlashcardPage() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-start',
-          overflow: 'auto',
+          overflow: 'visible',
           paddingBottom: '10px'
         }}>
           {/* Chapter info banner */}
           <div style={{
             marginBottom: '10px',
             padding: '6px 12px',
-            backgroundColor: '#e7f3ff',
+            backgroundColor: '#eaf2e8',
             borderRadius: '6px',
             display: 'inline-block',
             fontSize: '13px'
@@ -570,7 +571,7 @@ export default function ChapterFlashcardPage() {
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#007bff',
+                color: '#176b5c',
                 cursor: 'pointer',
                 textDecoration: 'underline',
                 fontSize: '13px'
@@ -580,7 +581,7 @@ export default function ChapterFlashcardPage() {
             </button>
           </div>
 
-          {/* Details Section - Now appears ABOVE the flashcard */}
+          {/* Answer details */}
           {showDetails && (
               <div style={{
                 padding: '12px 16px',
@@ -589,8 +590,8 @@ export default function ChapterFlashcardPage() {
                 borderRadius: '12px',
                 marginBottom: '10px',
                 textAlign: 'left',
-                maxHeight: '40dvh',
-                overflow: 'auto',
+                maxHeight: 'none',
+                overflow: 'visible',
                 fontSize: '14px'
               }}>
                 {!isEditing ? (
@@ -642,7 +643,7 @@ export default function ChapterFlashcardPage() {
                       </div>
                     </div>
 
-                    <div 
+                    <div
                       className="flashcard-buttons"
                       style={{
                         display: 'flex',
@@ -653,33 +654,13 @@ export default function ChapterFlashcardPage() {
                         borderTop: '1px solid #dee2e6'
                       }}
                     >
-                      <button
-                        onClick={handlePronounce}
-                        disabled={playing}
-                        style={{
-                          padding: '8px 12px',
-                          backgroundColor: playing ? '#6c757d' : '#28a745',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: playing ? 'not-allowed' : 'pointer',
-                          fontSize: '13px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '4px',
-                          flex: 1
-                        }}
-                      >
-                        <span style={{ fontSize: '14px' }}>{playing ? '🔊' : '🔉'}</span>
-                        <span>{playing ? 'Playing...' : 'Pronounce'}</span>
-                      </button>
+
 
                       <button
                         onClick={handleEdit}
                         style={{
                           padding: '8px 12px',
-                          backgroundColor: '#007bff',
+                          backgroundColor: '#176b5c',
                           color: 'white',
                           border: 'none',
                           borderRadius: '6px',
@@ -700,7 +681,7 @@ export default function ChapterFlashcardPage() {
                         onClick={handleFavoriteClick}
                         style={{
                           padding: '8px 12px',
-                          backgroundColor: currentWord.isFavorite ? '#dc3545' : '#ffc107',
+                          backgroundColor: currentWord.isFavorite ? '#a44040' : '#b78319',
                           color: currentWord.isFavorite ? 'white' : '#000',
                           border: 'none',
                           borderRadius: '6px',
@@ -848,7 +829,7 @@ export default function ChapterFlashcardPage() {
                       />
                     </div>
 
-                    <div 
+                    <div
                       className="flashcard-buttons"
                       style={{
                         display: 'flex',
@@ -905,11 +886,11 @@ export default function ChapterFlashcardPage() {
               </div>
             )}
 
-            {/* Chinese Character Card - Now appears BELOW the details */}
-            <div style={{
+            {/* Word comes first; the answer and controls follow */}
+            <div className="study-word" style={{
               padding: 'clamp(14px, 4vw, 20px) clamp(12px, 3vw, 15px)',
               backgroundColor: '#f8f9fa',
-              border: '3px solid #007bff',
+              border: '3px solid #176b5c',
               borderRadius: '16px',
               marginBottom: '10px',
               boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
@@ -921,35 +902,15 @@ export default function ChapterFlashcardPage() {
                   top: '10px',
                   right: '10px',
                   fontSize: '24px',
-                  color: '#ffc107'
+                  color: '#b78319'
                 }}>
                   ★
                 </div>
               )}
-              
+
               {/* Pronounce button on card - bottom right */}
-              <button
-                onClick={handlePronounce}
-                disabled={playing}
-                style={{
-                  position: 'absolute',
-                  bottom: '10px',
-                  right: '10px',
-                  padding: '6px 10px',
-                  backgroundColor: playing ? '#6c757d' : '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: playing ? 'not-allowed' : 'pointer',
-                  fontSize: '18px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                {playing ? '🔊' : '🔉'}
-              </button>
-              
+
+
               <div style={{
                 fontSize: 'clamp(48px, 15vw, 80px)',
                 fontWeight: 'bold',
@@ -960,48 +921,10 @@ export default function ChapterFlashcardPage() {
                 {currentWord.chineseCharacter}
               </div>
 
-              {!showDetails && (
-                <button
-                  onClick={handleShowDetails}
-                  style={{
-                    padding: '10px 24px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    marginTop: '5px'
-                  }}
-                >
-                  Show Details
-                </button>
-              )}
+
             </div>
 
-          {/* Next Button */}
-          <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '10px' }}>
-            <button
-              onClick={handleNext}
-              disabled={isEditing}
-              style={{
-                padding: '10px 30px',
-                backgroundColor: isEditing ? '#6c757d' : '#17a2b8',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: isEditing ? 'not-allowed' : 'pointer',
-                fontSize: 'clamp(14px, 4vw, 16px)',
-                fontWeight: 'bold',
-                width: '100%',
-                maxWidth: '300px',
-                opacity: isEditing ? 0.6 : 1
-              }}
-            >
-              {isEditing ? 'Save or Cancel Edit First' : 'Next Word'}
-            </button>
-          </div>
+          <StudyActions revealed={showDetails} playing={playing} disabled={isEditing || loading} onReveal={() => setShowDetails(value => !value)} onListen={handlePronounce} onNext={handleNext} />
         </div>
       )}
 
@@ -1034,14 +957,14 @@ export default function ChapterFlashcardPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ 
-              marginTop: 0, 
-              marginBottom: '20px', 
-              color: favoriteAction === 'unfavorite' ? '#dc3545' : '#ffc107' 
+            <h2 style={{
+              marginTop: 0,
+              marginBottom: '20px',
+              color: favoriteAction === 'unfavorite' ? '#a44040' : '#b78319'
             }}>
               {favoriteAction === 'unfavorite' ? 'Un-favorite Word?' : 'Favorite Word?'}
             </h2>
-            
+
             <div style={{ marginBottom: '25px' }}>
               <div style={{
                 fontSize: '48px',
@@ -1051,33 +974,33 @@ export default function ChapterFlashcardPage() {
               }}>
                 {currentWord.chineseCharacter}
               </div>
-              
+
               <p style={{ fontSize: '16px', color: '#666', lineHeight: '1.6', marginBottom: '10px' }}>
-                {favoriteAction === 'unfavorite' 
+                {favoriteAction === 'unfavorite'
                   ? 'Are you sure you want to remove this word from your favorites?'
                   : 'Add this word to your favorites for quick practice?'}
               </p>
-              
+
               <div style={{
                 backgroundColor: favoriteAction === 'unfavorite' ? '#fff3cd' : '#d1ecf1',
-                border: `1px solid ${favoriteAction === 'unfavorite' ? '#ffc107' : '#bee5eb'}`,
+                border: `1px solid ${favoriteAction === 'unfavorite' ? '#b78319' : '#bee5eb'}`,
                 borderRadius: '6px',
                 padding: '12px',
                 marginTop: '15px'
               }}>
-                <p style={{ 
-                  margin: 0, 
-                  fontSize: '14px', 
-                  color: favoriteAction === 'unfavorite' ? '#856404' : '#0c5460' 
+                <p style={{
+                  margin: 0,
+                  fontSize: '14px',
+                  color: favoriteAction === 'unfavorite' ? '#856404' : '#0c5460'
                 }}>
                   {favoriteAction === 'unfavorite' ? (
                     <>
-                      <strong>⚠️ Note:</strong> This word will no longer appear in your favorite flashcard practice. 
+                      <strong>⚠️ Note:</strong> This word will no longer appear in your favorite flashcard practice.
                       You can re-favorite it later from the Vocabulary Management or Phrases pages.
                     </>
                   ) : (
                     <>
-                      <strong>ℹ️ Note:</strong> Favorited words will appear in your favorite flashcard practice 
+                      <strong>ℹ️ Note:</strong> Favorited words will appear in your favorite flashcard practice
                       for focused review.
                     </>
                   )}
@@ -1105,12 +1028,12 @@ export default function ChapterFlashcardPage() {
               >
                 Cancel
               </button>
-              
+
               <button
                 onClick={handleToggleFavorite}
                 style={{
                   padding: '10px 24px',
-                  backgroundColor: favoriteAction === 'unfavorite' ? '#dc3545' : '#ffc107',
+                  backgroundColor: favoriteAction === 'unfavorite' ? '#a44040' : '#b78319',
                   color: favoriteAction === 'unfavorite' ? 'white' : '#000',
                   border: 'none',
                   borderRadius: '6px',

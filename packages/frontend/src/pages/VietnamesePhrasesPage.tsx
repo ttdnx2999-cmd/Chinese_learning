@@ -219,7 +219,7 @@ export default function VietnamesePhrasesPage() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   return (
-    <div style={{ padding: '20px', paddingTop: '50px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="phrase-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
         <h1 style={{ margin: 0 }}>🇻🇳 Vietnamese Phrases</h1>
       </div>
@@ -532,7 +532,7 @@ export default function VietnamesePhrasesPage() {
       <button
         onClick={scrollToTop}
         style={{
-          position: 'fixed', bottom: '30px', right: '30px', padding: '12px 16px',
+          position: 'fixed', bottom: 'calc(90px + env(safe-area-inset-bottom))', right: '30px', padding: '12px 16px',
           backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '50%',
           cursor: 'pointer', fontSize: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
           zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center',

@@ -36,6 +36,20 @@ For example, if you have studied chapters 1–3, you can practice with a vocabul
 
 Sentence generation uses the selected vocabulary and a small set of basic grammatical particles. AI-generated output can vary; the app is designed to keep practice within your learning scope, rather than guarantee that every generated sentence contains only words you have explicitly added.
 
+## Flashcards: recall the words you have learned
+
+Sentence practice builds on word recall. Flashcards let you review your own vocabulary before using it in sentences, without introducing a separate, unfamiliar word list.
+
+- **Chapter decks:** choose a chapter range or chapter label to match the material you have studied.
+- **Favorite decks:** review saved words, with chapter filters for a more focused session.
+- **Recall before revealing:** see the Chinese characters first, then reveal pinyin, available Vietnamese and English meanings, and your learning notes. Hide the answer to try again.
+- **Listen while reviewing:** play Chinese pronunciation using your browser's speech synthesis; voice availability depends on your device.
+- **Choose your order:** use random selection for quick practice, or shuffled mode to work through the selected deck before it reshuffles.
+- **Keep your library useful:** favorite words and edit vocabulary details where your account permissions allow. Child accounts use their linked parent's vocabulary and have editing restrictions.
+- **Comfortable on phone and desktop:** grouped Listen, Reveal, and Next controls keep the main study actions together; mobile navigation keeps common destinations within reach.
+
+Flashcards support self-directed review; they do not currently schedule spaced repetition or score mastery.
+
 ## Who it is for
 
 - Learners who know some Chinese words but need more practice using them in sentences.

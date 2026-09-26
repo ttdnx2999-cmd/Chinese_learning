@@ -94,7 +94,7 @@ export default function PhrasesPage() {
         // Try to fetch vocab groups to see if new data is available
         const response = await apiClient.get<VocabGroupResponse[]>('/phrases/vocab-groups');
         const newGroups = response.data;
-        
+
         // Check if the sentence count has changed (indicating new generation)
         const oldTotalCount = vocabGroups.reduce((sum, g) => sum + g.sentenceCount, 0);
         const newTotalCount = newGroups.reduce((sum, g) => sum + g.sentenceCount, 0);
@@ -110,12 +110,12 @@ export default function PhrasesPage() {
           clearInterval(pollInterval);
           return;
         }
-        
+
         // Detect completion: count changed, OR at least 30s passed and sentences exist
         // (handles re-generation where count stays the same)
         const countChanged = newTotalCount !== oldTotalCount && newTotalCount > 0;
         const regenerationDone = elapsed > 30000 && newTotalCount > 0 && oldTotalCount > 0;
-        
+
         if (countChanged || regenerationDone) {
           // Generation completed - clear the flag
           console.log('Generation detected as complete - clearing status');
@@ -127,7 +127,7 @@ export default function PhrasesPage() {
           setSentences(new Map()); // clear cached sentences so fresh ones load
           setExpandedGroup(null);
           clearInterval(pollInterval);
-          
+
           // Show success message
           alert('Phrase generation completed successfully!');
         }
@@ -193,14 +193,14 @@ export default function PhrasesPage() {
       setVocabGroups(response.data);
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || err.message || 'Failed to load vocabulary groups';
-      
+
       // Retry logic: 2 attempts with 1s delay
       if (retryCount < 2) {
         console.log(`Retrying vocab groups fetch (attempt ${retryCount + 1}/2)...`);
         await new Promise(resolve => setTimeout(resolve, 1000));
         return fetchVocabGroups(retryCount + 1);
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -227,14 +227,14 @@ export default function PhrasesPage() {
       setSentences(prev => new Map(prev).set(vocabGroupId, response.data));
     } catch (err: any) {
       console.error(`Failed to load sentences for group ${vocabGroupId}:`, err);
-      
+
       // Retry logic: 2 attempts with 1s delay
       if (retryCount < 2) {
         console.log(`Retrying sentences fetch for group ${vocabGroupId} (attempt ${retryCount + 1}/2)...`);
         await new Promise(resolve => setTimeout(resolve, 1000));
         return fetchSentences(vocabGroupId, retryCount + 1);
       }
-      
+
       setError(`Failed to load sentences for group ${vocabGroupId}`);
     } finally {
       setLoadingSentences(prev => {
@@ -292,7 +292,7 @@ export default function PhrasesPage() {
       setCharacterDetails(details);
     } catch (error) {
       console.error('Error fetching character details:', error);
-      
+
       // Retry logic: 2 attempts with 1s delay
       if (retryCount < 2) {
         console.log(`Retrying character details fetch (attempt ${retryCount + 1}/2)...`);
@@ -306,19 +306,19 @@ export default function PhrasesPage() {
 
   const handlePronounceCharacter = (character: string) => {
     if (!character || character === 'N/A') return;
-    
+
     if ('speechSynthesis' in window) {
       setPlayingCharacter(character);
       const utterance = new SpeechSynthesisUtterance(character);
       utterance.lang = 'zh-CN';
       utterance.rate = 0.5;
-      
+
       utterance.onend = () => setPlayingCharacter(null);
       utterance.onerror = () => {
         setPlayingCharacter(null);
         alert('Failed to play pronunciation');
       };
-      
+
       window.speechSynthesis.speak(utterance);
     } else {
       alert('Text-to-speech is not supported in your browser');
@@ -327,19 +327,19 @@ export default function PhrasesPage() {
 
   const handlePronounceSentence = () => {
     if (!selectedSentence || !selectedSentence.chineseText) return;
-    
+
     if ('speechSynthesis' in window) {
       setPlayingSentence(true);
       const utterance = new SpeechSynthesisUtterance(selectedSentence.chineseText);
       utterance.lang = 'zh-CN';
       utterance.rate = 0.7;
-      
+
       utterance.onend = () => setPlayingSentence(false);
       utterance.onerror = () => {
         setPlayingSentence(false);
         alert('Failed to play sentence pronunciation');
       };
-      
+
       window.speechSynthesis.speak(utterance);
     } else {
       alert('Text-to-speech is not supported in your browser');
@@ -388,7 +388,7 @@ export default function PhrasesPage() {
       // Get the vocabulary entry by character to find the ID
       const entriesResponse = await apiClient.get(`/${user.username}/vocabulary`);
       const entry = entriesResponse.data.find((e: any) => e.chineseCharacter === editingCharacter);
-      
+
       if (!entry) {
         alert('Character not found in vocabulary');
         return;
@@ -432,42 +432,42 @@ export default function PhrasesPage() {
   const handleRefreshPhrases = async () => {
     if (showEditProtection('regenerate')) return;
     if (refreshing) return;
-    
+
     // Password protection
     const password = window.prompt('Enter password to refresh phrases:');
     if (password !== 'BoyaChineseNgoc') {
       alert('Incorrect password');
       return;
     }
-    
+
     const confirmed = window.confirm(
       'This will generate new phrases for all vocabulary groups. This may take several minutes. Continue?'
     );
-    
+
     if (!confirmed) return;
-    
+
     const startTime = Date.now();
     setRefreshing(true);
     setGenerationStartTime(startTime);
     localStorage.setItem('phraseGenerationInProgress', 'true');
     localStorage.setItem('phraseGenerationStartTime', startTime.toString());
     setError(null);
-    
+
     try {
       await apiClient.post('/phrases/generate', {}, {
         timeout: 30000
       });
-      
+
       // Server accepted the request — generation is running in background.
       // Stay in refreshing=true state; the polling useEffect will detect
       // when new sentences appear and clear the flag automatically.
       console.log('[Phrases] Generation started in background, polling for completion...');
     } catch (err: any) {
       console.error('Error generating phrases:', err);
-      
+
       const errorMessage = err.response?.data?.error || err.message || 'Failed to generate phrases';
       setError(errorMessage);
-      
+
       if (err.response?.status === 503) {
         // Generation is already in progress on server - keep polling
         alert('Generation is already in progress. The page will update automatically when complete.');
@@ -483,9 +483,9 @@ export default function PhrasesPage() {
   };
 
   return (
-    <div style={{ padding: '20px', paddingTop: '50px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="phrase-page">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-        <h1 style={{ margin: 0 }}>Pre-Generated Phrases</h1>
+        <h1 style={{ margin: 0 }}>Chinese sentence practice</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
           {refreshing && (
             <button
@@ -1213,7 +1213,7 @@ export default function PhrasesPage() {
         onClick={scrollToTop}
         style={{
           position: 'fixed',
-          bottom: '30px',
+          bottom: 'calc(90px + env(safe-area-inset-bottom))',
           right: '30px',
           padding: '12px 16px',
           backgroundColor: '#007bff',

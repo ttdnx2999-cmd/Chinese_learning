@@ -1,6 +1,6 @@
 /**
  * Login Page
- * 
+ *
  * Allows users to authenticate with username and secret phrase.
  * Handles login errors and redirects to main app on success.
  */
@@ -39,7 +39,7 @@ export default function LoginPage() {
       navigate('/');
     } catch (err: any) {
       console.error('Login failed:', err);
-      
+
       if (err.response?.status === 401) {
         setError('Invalid username or secret phrase');
       } else if (err.response?.data?.error) {
@@ -55,7 +55,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={styles.container}>
+    <div className="login-layout" style={styles.container}>
       <div style={styles.card}>
         <h1 style={styles.title}>🇨🇳 Chinese Learning App</h1>
         <p style={styles.subtitle}>Sign in to your account</p>
@@ -67,18 +67,13 @@ export default function LoginPage() {
               Username
             </label>
             <input
-              id="username"
+              id="username" autoComplete="username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter your username"
               disabled={isLoading}
               style={styles.input}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && !isLoading) {
-                  handleSubmit(e as any);
-                }
-              }}
             />
           </div>
 
@@ -98,24 +93,19 @@ export default function LoginPage() {
               </button>
             </div>
             <input
-              id="secretPhrase"
+              id="secretPhrase" autoComplete="current-password"
               type={showPhrase ? 'text' : 'password'}
               value={secretPhrase}
               onChange={(e) => setSecretPhrase(e.target.value)}
               placeholder="Enter your secret phrase"
               disabled={isLoading}
               style={styles.input}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && !isLoading) {
-                  handleSubmit(e as any);
-                }
-              }}
             />
           </div>
 
           {/* Error Message */}
           {error && (
-            <div style={styles.errorBox}>
+            <div role="alert" style={styles.errorBox}>
               <span style={styles.errorIcon}>⚠️</span>
               <span>{error}</span>
             </div>
@@ -144,11 +134,11 @@ export default function LoginPage() {
       </div>
 
       {/* Info Panel */}
-      <div style={styles.infoPanel}>
-        <h2 style={styles.infoPanelTitle}>About This App</h2>
+      <div className="login-info" style={styles.infoPanel}>
+        <h2 style={styles.infoPanelTitle}>Practice what you know.</h2>
         <ul style={styles.infoList}>
           <li>📚 Learn Chinese vocabulary through interactive flashcards</li>
-          <li>🎯 AI-generated comprehension exercises</li>
+          <li>🎯 Sentence practice built around vocabulary you have learned</li>
         </ul>
       </div>
     </div>
@@ -158,7 +148,7 @@ export default function LoginPage() {
 const styles = {
   container: {
     display: 'flex',
-    minHeight: '100vh',
+    minHeight: 'min(800px, 90dvh)',
     backgroundColor: '#f5f5f5',
     fontFamily: 'system-ui, -apple-system, sans-serif'
   } as React.CSSProperties,
@@ -214,7 +204,7 @@ const styles = {
   toggleButton: {
     background: 'none',
     border: 'none',
-    color: '#007bff',
+    color: '#176b5c',
     cursor: 'pointer',
     fontSize: '12px',
     padding: '0',
@@ -238,7 +228,7 @@ const styles = {
     marginTop: '24px',
     fontSize: '16px',
     fontWeight: '600',
-    backgroundColor: '#007bff',
+    backgroundColor: '#176b5c',
     color: 'white',
     border: 'none',
     borderRadius: '6px',
@@ -271,8 +261,8 @@ const styles = {
   helpBox: {
     marginTop: '32px',
     padding: '16px',
-    backgroundColor: '#e7f3ff',
-    border: '1px solid #b3d9ff',
+    backgroundColor: '#eef4e7',
+    border: '1px solid #d7e3cc',
     borderRadius: '6px',
     maxWidth: '400px'
   } as React.CSSProperties,
@@ -280,13 +270,13 @@ const styles = {
   helpTitle: {
     fontSize: '14px',
     fontWeight: '600',
-    color: '#004085',
+    color: '#3c614b',
     margin: '0 0 8px 0'
   } as React.CSSProperties,
 
   helpText: {
     fontSize: '13px',
-    color: '#004085',
+    color: '#3c614b',
     margin: '0',
     lineHeight: '1.5'
   } as React.CSSProperties,
@@ -298,7 +288,7 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'flex-start',
     padding: '40px',
-    backgroundColor: '#007bff',
+    backgroundColor: '#176b5c',
     color: 'white'
   } as React.CSSProperties,
 

@@ -13,7 +13,7 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
   const { username: paramUsername } = useParams<{ username: string }>();
   const { user } = useAuth();
   const showEditProtection = useChildEditProtection();
-  
+
   // Use prop username if provided, otherwise try params, otherwise use current user's username
   const username = propUsername || paramUsername || user?.username;
   const [entries, setEntries] = useState<VocabularyEntry[]>([]);
@@ -55,17 +55,17 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
         setShowScrollTop(window.scrollY > 300);
       }, 100);
     };
-    
+
     const handleResize = () => {
       // Handle window resize - could be used for responsive adjustments
       // Currently just ensuring scroll button visibility is updated
       setShowScrollTop(window.scrollY > 300);
       setIsSmallScreen(window.innerWidth < 1200);
     };
-    
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleResize, { passive: true });
-    
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
@@ -87,7 +87,7 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
     try {
       const response = await vocabularyApi.getChapters(username);
       setAvailableChapters(response.data);
-      
+
       // Set default batch chapter to latest chapter
       if (response.data.length > 0) {
         const latestChapter = Math.max(...response.data);
@@ -141,7 +141,7 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
     if (!username || !editingId) return;
     try {
       await vocabularyApi.update(username, editingId, editForm);
-      
+
       // Update the local state with the saved changes
       setEntries(prevEntries =>
         prevEntries.map(e =>
@@ -150,10 +150,10 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
             : e
         )
       );
-      
+
       // Reload chapter labels in case a new label was added
       loadChapterLabels();
-      
+
       setEditingId(null);
     } catch (error) {
       console.error('Failed to update entry:', error);
@@ -174,14 +174,14 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
 
   const handleBatchUpload = async () => {
     if (!username || !batchText.trim()) return;
-    
+
     // Validate chapter input
     const chapterNum = parseInt(batchChapter);
     if (!batchChapter.trim() || isNaN(chapterNum)) {
       alert('Please enter a valid chapter number');
       return;
     }
-    
+
     setBatchUploading(true);
     setBatchResult(null);
     try {
@@ -229,9 +229,9 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
   const handleBatchDelete = async () => {
     if (!username || selectedIds.size === 0) return;
     if (!confirm(`Delete ${selectedIds.size} selected entries?`)) return;
-    
+
     try {
-      const deletePromises = Array.from(selectedIds).map(id => 
+      const deletePromises = Array.from(selectedIds).map(id =>
         vocabularyApi.delete(username, id)
       );
       await Promise.all(deletePromises);
@@ -249,7 +249,7 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
       alert('Please select entries to edit');
       return;
     }
-    
+
     // Initialize edit forms for selected entries
     const forms = new Map<string, Partial<VocabularyEntry>>();
     entries.filter(e => selectedIds.has(e.id)).forEach(entry => {
@@ -266,13 +266,13 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
 
   const handleBatchEditSave = async () => {
     if (!username) return;
-    
+
     try {
       const updatePromises = Array.from(batchEditForms.entries()).map(([id, form]) =>
         vocabularyApi.update(username, id, form)
       );
       await Promise.all(updatePromises);
-      
+
       // Update the local state with the saved changes
       setEntries(prevEntries =>
         prevEntries.map(entry => {
@@ -280,10 +280,10 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
           return updatedForm ? { ...entry, ...updatedForm } : entry;
         })
       );
-      
+
       // Reload chapter labels in case new labels were added
       loadChapterLabels();
-      
+
       setBatchEditMode(false);
       setBatchEditForms(new Map());
       setSelectedIds(new Set());
@@ -315,7 +315,7 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
     if (target.tagName === 'BUTTON' || target.tagName === 'INPUT') {
       return;
     }
-    
+
     toggleSelection(id);
   };
 
@@ -328,7 +328,7 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
     if (!username) return;
     const entry = entries.find(e => e.id === id);
     if (!entry) return;
-    
+
     try {
       await vocabularyApi.update(username, id, { isFavorite: !entry.isFavorite });
       setEntries(prevEntries =>
@@ -344,10 +344,10 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
   if (loading) return <div>Loading...</div>;
 
   // Filter entries based on batch edit mode and favorites filter
-  let displayedEntries = batchEditMode 
+  let displayedEntries = batchEditMode
     ? entries.filter(e => selectedIds.has(e.id))
     : entries;
-  
+
   // Apply favorites filter (from button - kept for backward compatibility)
   if (showFavoritesOnly) {
     displayedEntries = displayedEntries.filter(e => e.isFavorite);
@@ -359,34 +359,34 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
   } else if (columnFilters.favorite === 'non-favorites') {
     displayedEntries = displayedEntries.filter(e => !e.isFavorite);
   }
-  
+
   if (columnFilters.chinese) {
-    displayedEntries = displayedEntries.filter(e => 
+    displayedEntries = displayedEntries.filter(e =>
       e.chineseCharacter.toLowerCase().includes(columnFilters.chinese.toLowerCase())
     );
   }
   if (columnFilters.pinyin) {
-    displayedEntries = displayedEntries.filter(e => 
+    displayedEntries = displayedEntries.filter(e =>
       e.pinyin.toLowerCase().includes(columnFilters.pinyin.toLowerCase())
     );
   }
   if (columnFilters.hanVietnamese) {
-    displayedEntries = displayedEntries.filter(e => 
+    displayedEntries = displayedEntries.filter(e =>
       e.hanVietnamese?.toLowerCase().includes(columnFilters.hanVietnamese.toLowerCase())
     );
   }
   if (columnFilters.modernVietnamese) {
-    displayedEntries = displayedEntries.filter(e => 
+    displayedEntries = displayedEntries.filter(e =>
       e.modernVietnamese?.toLowerCase().includes(columnFilters.modernVietnamese.toLowerCase())
     );
   }
   if (columnFilters.english) {
-    displayedEntries = displayedEntries.filter(e => 
+    displayedEntries = displayedEntries.filter(e =>
       e.englishMeaning?.toLowerCase().includes(columnFilters.english.toLowerCase())
     );
   }
   if (columnFilters.note) {
-    displayedEntries = displayedEntries.filter(e => 
+    displayedEntries = displayedEntries.filter(e =>
       e.learningNote?.toLowerCase().includes(columnFilters.note.toLowerCase())
     );
   }
@@ -404,12 +404,12 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
   return (
     <div className="vocabulary-management">
       <h2>Vocabulary Management - {username}</h2>
-      
+
       <div style={{ marginBottom: '20px' }}>
         <label style={{ marginRight: '15px' }}>
-          Filter by Chapter: 
-          <select 
-            value={selectedChapter || ''} 
+          Filter by Chapter:
+          <select
+            value={selectedChapter || ''}
             onChange={(e) => setSelectedChapter(e.target.value ? parseInt(e.target.value) : null)}
             disabled={!!selectedChapterLabel}
             style={{ marginLeft: '10px' }}
@@ -424,9 +424,9 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
 
       <div style={{ marginBottom: '20px' }}>
         <label style={{ marginRight: '15px', opacity: selectedChapterLabel ? 1 : 0.7 }}>
-          Filter by Chapter Label: 
-          <select 
-            value={selectedChapterLabel || ''} 
+          Filter by Chapter Label:
+          <select
+            value={selectedChapterLabel || ''}
             onChange={(e) => {
               const value = e.target.value;
               setSelectedChapterLabel(value || null);
@@ -494,20 +494,20 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
           ({displayedEntries.length} {showFavoritesOnly ? 'favorites' : 'entries'})
         </span>
       </div>
-      
+
       <div style={{ marginBottom: '20px' }}>
         <button onClick={() => setShowBatchUpload(!showBatchUpload)}>
           {showBatchUpload ? 'Hide Batch Upload' : 'Batch Upload'}
         </button>
         {selectedIds.size > 0 && !batchEditMode && (
           <>
-            <button 
+            <button
               onClick={handleBatchEditStart}
               style={{ marginLeft: '10px', backgroundColor: '#007bff', color: 'white' }}
             >
               Batch Edit ({selectedIds.size})
             </button>
-            <button 
+            <button
               onClick={handleBatchDelete}
               style={{ marginLeft: '10px', backgroundColor: '#dc3545', color: 'white' }}
             >
@@ -517,13 +517,13 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
         )}
         {batchEditMode && (
           <>
-            <button 
+            <button
               onClick={handleBatchEditSave}
               style={{ marginLeft: '10px', backgroundColor: '#28a745', color: 'white' }}
             >
               Save All Changes
             </button>
-            <button 
+            <button
               onClick={handleBatchEditCancel}
               style={{ marginLeft: '10px', backgroundColor: '#6c757d', color: 'white' }}
             >
@@ -548,7 +548,7 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
           />
           <div style={{ marginBottom: '10px', display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
             <label style={{ flex: '0 1 auto' }}>
-              Chapter: 
+              Chapter:
               <input
                 type="number"
                 value={batchChapter}
@@ -559,7 +559,7 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
               />
             </label>
             <label style={{ flex: '0 1 auto' }}>
-              Chapter Label (optional): 
+              Chapter Label (optional):
               <input
                 type="text"
                 value={batchChapterLabel}
@@ -571,8 +571,8 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
               />
             </label>
           </div>
-          <button 
-            onClick={handleBatchUpload} 
+          <button
+            onClick={handleBatchUpload}
             disabled={batchUploading || !batchText.trim()}
           >
             {batchUploading ? 'Uploading...' : 'Upload'}
@@ -610,8 +610,8 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
           <tr>
             <th style={{ padding: '4px 2px', textAlign: 'center' }}>#</th>
             <th style={{ padding: '4px 2px', textAlign: 'center' }}>
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={selectedIds.size === entries.length && entries.length > 0}
                 onChange={toggleSelectAll}
               />
@@ -758,10 +758,10 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
         <tbody>
           {displayedEntries.map((entry, index) => (
             <>
-            <tr 
+            <tr
               key={entry.id}
               onClick={(e) => !batchEditMode && editingId !== entry.id && handleRowClick(entry.id, e)}
-              style={{ 
+              style={{
                 cursor: batchEditMode || editingId === entry.id ? 'default' : 'pointer',
                 backgroundColor: selectedIds.has(entry.id) ? '#e3f2fd' : 'transparent'
               }}
@@ -773,32 +773,32 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
                 // Batch edit mode - all fields editable
                 <>
                   <td>
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={true}
                       disabled
                     />
                   </td>
-                  <td 
+                  <td
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleBatchEditFavorite(entry.id);
                     }}
-                    style={{ 
-                      textAlign: 'center', 
-                      fontSize: '20px', 
-                      color: (batchEditForms.get(entry.id)?.isFavorite !== undefined 
-                        ? batchEditForms.get(entry.id)?.isFavorite 
+                    style={{
+                      textAlign: 'center',
+                      fontSize: '20px',
+                      color: (batchEditForms.get(entry.id)?.isFavorite !== undefined
+                        ? batchEditForms.get(entry.id)?.isFavorite
                         : entry.isFavorite) ? '#ffc107' : '#ccc',
                       cursor: 'pointer',
                       userSelect: 'none'
                     }}
-                    title={(batchEditForms.get(entry.id)?.isFavorite !== undefined 
-                      ? batchEditForms.get(entry.id)?.isFavorite 
+                    title={(batchEditForms.get(entry.id)?.isFavorite !== undefined
+                      ? batchEditForms.get(entry.id)?.isFavorite
                       : entry.isFavorite) ? 'Click to remove from favorites' : 'Click to add to favorites'}
                   >
-                    {(batchEditForms.get(entry.id)?.isFavorite !== undefined 
-                      ? batchEditForms.get(entry.id)?.isFavorite 
+                    {(batchEditForms.get(entry.id)?.isFavorite !== undefined
+                      ? batchEditForms.get(entry.id)?.isFavorite
                       : entry.isFavorite) ? '★' : '☆'}
                   </td>
                   <td>
@@ -874,19 +874,19 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
               ) : editingId === entry.id ? (
                 <>
                   <td>
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       disabled
                     />
                   </td>
-                  <td 
+                  <td
                     onClick={(e) => {
                       e.stopPropagation();
                       setEditForm({ ...editForm, isFavorite: !editForm.isFavorite });
                     }}
-                    style={{ 
-                      textAlign: 'center', 
-                      fontSize: '20px', 
+                    style={{
+                      textAlign: 'center',
+                      fontSize: '20px',
                       color: editForm.isFavorite ? '#ffc107' : '#ccc',
                       cursor: 'pointer',
                       userSelect: 'none'
@@ -985,8 +985,8 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
               ) : (
                 <>
                   <td>
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={selectedIds.has(entry.id)}
                       onChange={(e) => {
                         e.stopPropagation();
@@ -994,14 +994,14 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
                       }}
                     />
                   </td>
-                  <td 
+                  <td
                     onClick={(e) => {
                       e.stopPropagation();
                       handleToggleFavorite(entry.id);
                     }}
-                    style={{ 
-                      textAlign: 'center', 
-                      fontSize: '20px', 
+                    style={{
+                      textAlign: 'center',
+                      fontSize: '20px',
                       color: entry.isFavorite ? '#ffc107' : '#ccc',
                       cursor: 'pointer',
                       userSelect: 'none'
@@ -1206,7 +1206,7 @@ export default function VocabularyManagement({ username: propUsername }: Vocabul
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           style={{
             position: 'fixed',
-            bottom: '30px',
+            bottom: 'calc(90px + env(safe-area-inset-bottom))',
             right: '30px',
             width: '50px',
             height: '50px',

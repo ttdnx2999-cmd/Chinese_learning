@@ -1,3 +1,4 @@
+import StudyActions from '../components/StudyActions';
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -97,34 +98,40 @@ export default function FlashcardPage() {
     }
   };
 
-  const fetchRandomFavorite = async () => {
+  const filterValues = { chapterStart, chapterEnd, chapterLabel };
+
+  const fetchRandomFavorite = async (options: { reset?: boolean; algorithm?: 'random' | 'shuffled'; clear?: boolean } = {}) => {
+    const selectedAlgorithm = options.algorithm ?? algorithm;
+    const chapterStart = options.clear ? null : filterValues.chapterStart;
+    const chapterEnd = options.clear ? null : filterValues.chapterEnd;
+    const chapterLabel = options.clear ? null : filterValues.chapterLabel;
     if (!usernameForAPI) return;
     setLoading(true);
     setError(null);
     setShowDetails(false);
     setNoFavorites(false);
-    
+
     try {
-      if (algorithm === 'shuffled') {
+      if (selectedAlgorithm === 'shuffled') {
         // Shuffled algorithm: fetch all words once and serve in order
-        if (shuffledWords.length === 0 || currentIndex >= shuffledWords.length) {
+        if (options.reset || shuffledWords.length === 0 || currentIndex >= shuffledWords.length) {
           // Fetch all favorites
           let url = `/${usernameForAPI}/vocabulary/favorites`;
           const params = new URLSearchParams();
-          
+
           if (chapterLabel) {
             params.append('chapterLabel', chapterLabel);
           } else if (chapterStart !== null && chapterEnd !== null) {
             params.append('chapterStart', chapterStart.toString());
             params.append('chapterEnd', chapterEnd.toString());
           }
-          
+
           if (params.toString()) {
             url += `?${params.toString()}`;
           }
-          
+
           const response = await apiClient.get<VocabularyEntry[]>(url);
-          
+
           if (response.data.length === 0) {
             setNoFavorites(true);
             if (chapterLabel) {
@@ -137,11 +144,15 @@ export default function FlashcardPage() {
             setLoading(false);
             return;
           }
-          
+
           // Shuffle the array
-          const shuffled = [...response.data].sort(() => Math.random() - 0.5);
+          const shuffled = [...response.data];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
           setShuffledWords(shuffled);
-          setCurrentIndex(0);
+          setCurrentIndex(1);
           setCurrentWord(shuffled[0]);
         } else {
           // Serve next word from shuffled list
@@ -152,18 +163,18 @@ export default function FlashcardPage() {
         // Random algorithm: fetch random word each time
         let url = `/${usernameForAPI}/vocabulary/favorites/random`;
         const params = new URLSearchParams();
-        
+
         if (chapterLabel) {
           params.append('chapterLabel', chapterLabel);
         } else if (chapterStart !== null && chapterEnd !== null) {
           params.append('chapterStart', chapterStart.toString());
           params.append('chapterEnd', chapterEnd.toString());
         }
-        
+
         if (params.toString()) {
           url += `?${params.toString()}`;
         }
-        
+
         const response = await apiClient.get<VocabularyEntry>(url);
         setCurrentWord(response.data);
       }
@@ -185,11 +196,7 @@ export default function FlashcardPage() {
     }
   };
 
-  const handleShowDetails = () => {
-    setShowDetails(true);
-  };
-
-  const handleEdit = () => {
+const handleEdit = () => {
     if (showEditProtection('edit')) return;
     if (currentWord) {
       setEditedWord({ ...currentWord });
@@ -239,7 +246,7 @@ export default function FlashcardPage() {
     // Reset shuffled list when filter changes
     setShuffledWords([]);
     setCurrentIndex(0);
-    fetchRandomFavorite();
+    fetchRandomFavorite({ reset: true });
   };
 
   const handleClearFilter = () => {
@@ -251,7 +258,7 @@ export default function FlashcardPage() {
     setShuffledWords([]);
     setCurrentIndex(0);
     // Trigger fetch after state updates
-    setTimeout(() => fetchRandomFavorite(), 0);
+    fetchRandomFavorite({ reset: true, clear: true });
   };
 
   const handleUnfavorite = async () => {
@@ -266,8 +273,8 @@ export default function FlashcardPage() {
       // Close confirmation dialog
       setShowUnfavoriteConfirm(false);
 
-      // Fetch next word after unfavoriting
-      fetchRandomFavorite();
+      // Rebuild the deck so removed favorites cannot return.
+      fetchRandomFavorite({ reset: true });
     } catch (error) {
       console.error('Error unfavoriting word:', error);
       alert('Failed to unfavorite word');
@@ -279,10 +286,10 @@ export default function FlashcardPage() {
 
     if ('speechSynthesis' in window) {
       setPlaying(true);
-      
+
       // Cancel any ongoing speech
       window.speechSynthesis.cancel();
-      
+
       // Longer delay to ensure cancellation is complete and speech synthesis is ready
       setTimeout(() => {
         const utterance = new SpeechSynthesisUtterance(currentWord.chineseCharacter);
@@ -294,11 +301,11 @@ export default function FlashcardPage() {
         utterance.onend = () => {
           setPlaying(false);
         };
-        
+
         utterance.onerror = (event) => {
           console.error('Speech synthesis error:', event);
           setPlaying(false);
-          
+
           // More specific error messages
           if (event.error === 'network') {
             alert('Network error. Please check your connection.');
@@ -326,9 +333,9 @@ export default function FlashcardPage() {
   };
 
   return (
-    <div style={{
+    <div className="study-page" style={{
       padding: '10px 16px',
-      paddingTop: '56px',
+      paddingTop: '0px',
       maxWidth: '800px',
       margin: '0 auto',
       height: '100dvh',
@@ -369,7 +376,7 @@ export default function FlashcardPage() {
           >
             {(chapterStart !== null || chapterLabel !== null) ? '📚 Filter Active' : '📚 Filter by Chapter'}
           </button>
-          
+
           <select
             value={algorithm}
             onChange={(e) => {
@@ -377,9 +384,7 @@ export default function FlashcardPage() {
               setAlgorithm(newAlgorithm);
               setShuffledWords([]);
               setCurrentIndex(0);
-              if (newAlgorithm === 'shuffled') {
-                fetchRandomFavorite();
-              }
+              fetchRandomFavorite({ reset: true, algorithm: newAlgorithm });
             }}
             style={{
               padding: '8px 12px',
@@ -393,7 +398,7 @@ export default function FlashcardPage() {
             <option value="random">🎲 Random</option>
             <option value="shuffled">🔀 Shuffled Order</option>
           </select>
-          
+
           {algorithm === 'shuffled' && shuffledWords.length > 0 && (
             <span style={{ fontSize: '13px', color: '#666' }}>
               {currentIndex}/{shuffledWords.length}
@@ -426,7 +431,7 @@ export default function FlashcardPage() {
               style={{
                 display: 'inline-block',
                 padding: '10px 20px',
-                backgroundColor: '#007bff',
+                backgroundColor: '#176b5c',
                 color: 'white',
                 textDecoration: 'none',
                 borderRadius: '4px',
@@ -448,10 +453,10 @@ export default function FlashcardPage() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-start',
-          overflow: 'auto',
+          overflow: 'visible',
           paddingBottom: '10px'
         }}>
-          {/* Details Section - Now appears ABOVE the flashcard */}
+          {/* Answer details */}
           {showDetails && (
             <div style={{
               padding: '12px 16px',
@@ -460,8 +465,8 @@ export default function FlashcardPage() {
               borderRadius: '12px',
               marginBottom: '12px',
               textAlign: 'left',
-              maxHeight: '40dvh',
-              overflow: 'auto'
+              maxHeight: 'none',
+              overflow: 'visible'
             }}>
               {!isEditing ? (
                 <>
@@ -512,7 +517,7 @@ export default function FlashcardPage() {
                     </div>
                   </div>
 
-                  <div 
+                  <div
                     className="flashcard-buttons"
                     style={{
                       display: 'flex',
@@ -523,33 +528,13 @@ export default function FlashcardPage() {
                       borderTop: '1px solid #dee2e6'
                     }}
                   >
-                    <button
-                      onClick={handlePronounce}
-                      disabled={playing}
-                      style={{
-                        padding: '8px 16px',
-                        backgroundColor: playing ? '#6c757d' : '#28a745',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: playing ? 'not-allowed' : 'pointer',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        flex: 1
-                      }}
-                    >
-                      <span style={{ fontSize: '16px' }}>{playing ? '🔊' : '🔉'}</span>
-                      <span>{playing ? 'Playing...' : 'Pronounce'}</span>
-                    </button>
+
 
                     <button
                       onClick={handleEdit}
                       style={{
                         padding: '8px 16px',
-                        backgroundColor: '#007bff',
+                        backgroundColor: '#176b5c',
                         color: 'white',
                         border: 'none',
                         borderRadius: '6px',
@@ -570,7 +555,7 @@ export default function FlashcardPage() {
                       onClick={() => setShowUnfavoriteConfirm(true)}
                       style={{
                         padding: '8px 16px',
-                        backgroundColor: '#dc3545',
+                        backgroundColor: '#a44040',
                         color: 'white',
                         border: 'none',
                         borderRadius: '6px',
@@ -718,7 +703,7 @@ export default function FlashcardPage() {
                     />
                   </div>
 
-                  <div 
+                  <div
                     className="flashcard-buttons"
                     style={{
                       display: 'flex',
@@ -775,11 +760,11 @@ export default function FlashcardPage() {
             </div>
           )}
 
-          {/* Chinese Character Card - Now appears BELOW the details */}
-          <div style={{
+          {/* Word comes first; the answer and controls follow */}
+          <div className="study-word" style={{
             padding: 'clamp(16px, 4vw, 30px) clamp(12px, 3vw, 20px)',
             backgroundColor: '#f8f9fa',
-            border: '3px solid #007bff',
+            border: '3px solid #176b5c',
             borderRadius: '16px',
             marginBottom: '10px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
@@ -791,35 +776,15 @@ export default function FlashcardPage() {
                 top: '15px',
                 right: '15px',
                 fontSize: '32px',
-                color: '#ffc107'
+                color: '#b78319'
               }}>
                 ★
               </div>
             )}
-            
+
             {/* Pronounce button on card - bottom right */}
-            <button
-              onClick={handlePronounce}
-              disabled={playing}
-              style={{
-                position: 'absolute',
-                bottom: '15px',
-                right: '15px',
-                padding: '8px 12px',
-                backgroundColor: playing ? '#6c757d' : '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: playing ? 'not-allowed' : 'pointer',
-                fontSize: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              {playing ? '🔊' : '🔉'}
-            </button>
-            
+
+
             <div style={{
               fontSize: 'clamp(48px, 15vw, 80px)',
               fontWeight: 'bold',
@@ -830,48 +795,10 @@ export default function FlashcardPage() {
               {currentWord.chineseCharacter}
             </div>
 
-            {!showDetails && (
-              <button
-                onClick={handleShowDetails}
-                style={{
-                  padding: '12px 30px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  marginTop: '10px'
-                }}
-              >
-                Show Details
-              </button>
-            )}
+
           </div>
 
-          {/* Next Button */}
-          <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '10px' }}>
-            <button
-              onClick={handleNext}
-              disabled={isEditing}
-              style={{
-                padding: '12px 40px',
-                backgroundColor: isEditing ? '#6c757d' : '#17a2b8',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: isEditing ? 'not-allowed' : 'pointer',
-                fontSize: 'clamp(15px, 4vw, 18px)',
-                fontWeight: 'bold',
-                width: '100%',
-                maxWidth: '300px',
-                opacity: isEditing ? 0.6 : 1
-              }}
-            >
-              {isEditing ? 'Save or Cancel Edit First' : 'Next Word'}
-            </button>
-          </div>
+          <StudyActions revealed={showDetails} playing={playing} disabled={isEditing || loading} onReveal={() => setShowDetails(value => !value)} onListen={handlePronounce} onNext={handleNext} />
         </div>
       )}
 
@@ -904,10 +831,10 @@ export default function FlashcardPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#dc3545' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#a44040' }}>
               Un-favorite Word?
             </h2>
-            
+
             <div style={{ marginBottom: '25px' }}>
               <div style={{
                 fontSize: '48px',
@@ -917,20 +844,20 @@ export default function FlashcardPage() {
               }}>
                 {currentWord.chineseCharacter}
               </div>
-              
+
               <p style={{ fontSize: '16px', color: '#666', lineHeight: '1.6', marginBottom: '10px' }}>
                 Are you sure you want to remove this word from your favorites?
               </p>
-              
+
               <div style={{
                 backgroundColor: '#fff3cd',
-                border: '1px solid #ffc107',
+                border: '1px solid #b78319',
                 borderRadius: '6px',
                 padding: '12px',
                 marginTop: '15px'
               }}>
                 <p style={{ margin: 0, fontSize: '14px', color: '#856404' }}>
-                  <strong>⚠️ Note:</strong> This word will no longer appear in your flashcard practice. 
+                  <strong>⚠️ Note:</strong> This word will no longer appear in your flashcard practice.
                   You can re-favorite it later from the Vocabulary Management or Phrases pages.
                 </p>
               </div>
@@ -956,12 +883,12 @@ export default function FlashcardPage() {
               >
                 Cancel
               </button>
-              
+
               <button
                 onClick={handleUnfavorite}
                 style={{
                   padding: '10px 24px',
-                  backgroundColor: '#dc3545',
+                  backgroundColor: '#a44040',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
@@ -1006,10 +933,10 @@ export default function FlashcardPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#007bff' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '20px', color: '#176b5c' }}>
               Filter by Chapter
             </h2>
-            
+
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
                 Chapter Label:
@@ -1043,7 +970,7 @@ export default function FlashcardPage() {
               </div>
             </div>
 
-            <div style={{ 
+            <div style={{
               marginBottom: '20px',
               opacity: chapterLabel ? 0.5 : 1,
               pointerEvents: chapterLabel ? 'none' : 'auto'
@@ -1070,7 +997,7 @@ export default function FlashcardPage() {
               </select>
             </div>
 
-            <div style={{ 
+            <div style={{
               marginBottom: '25px',
               opacity: chapterLabel ? 0.5 : 1,
               pointerEvents: chapterLabel ? 'none' : 'auto'
@@ -1107,7 +1034,7 @@ export default function FlashcardPage() {
                   onClick={handleClearFilter}
                   style={{
                     padding: '10px 24px',
-                    backgroundColor: '#dc3545',
+                    backgroundColor: '#a44040',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -1119,7 +1046,7 @@ export default function FlashcardPage() {
                   Clear Filter
                 </button>
               )}
-              
+
               <button
                 onClick={() => setShowChapterFilter(false)}
                 style={{
@@ -1135,12 +1062,12 @@ export default function FlashcardPage() {
               >
                 Cancel
               </button>
-              
+
               <button
                 onClick={handleApplyFilter}
                 style={{
                   padding: '10px 24px',
-                  backgroundColor: '#007bff',
+                  backgroundColor: '#176b5c',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
