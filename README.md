@@ -1,15 +1,64 @@
 # Chinese Learning App
 
-React web app, Express API, and Expo mobile app for Chinese vocabulary learning.
+**Practice Chinese sentences with the vocabulary you already know.**
 
-## Local setup
+For Chinese learners who feel overwhelmed by unfamiliar words, this app helps them practice sentences confidently **by building practice around vocabulary they have already learned**.
 
-1. Install Node.js and MySQL, then run `npm install`.
-2. Copy `packages/backend/.env.example` to `packages/backend/.env` and fill in your database settings, API keys, and a strong random `JWT_SECRET`.
+## The gap this app solves
+
+Knowing individual words does not always make it easy to understand or form a sentence. Practice materials can introduce too many unfamiliar words at once, turning a sentence exercise into a series of dictionary lookups.
+
+Chinese Learning App starts with your own vocabulary list and the chapters you have studied. The goal is to make it easier to use familiar words in new combinations, build sentence comprehension, and practice without feeling overwhelmed.
+
+## How it works
+
+1. **Add the words you have learned.** Upload or manage your vocabulary and organize it by chapter.
+2. **Choose your practice scope.** Use chapter-based vocabulary groups to match your current learning progress.
+3. **Practice sentences built around those words.** Read Chinese phrases, listen to pronunciation, and use pinyin and meanings for support.
+4. **Review and expand.** Save favorite words, practice flashcards, and add new chapters as you learn more.
+
+For example, if you have studied chapters 1–3, you can practice with a vocabulary group covering those chapters before moving on to later material.
+
+## Features
+
+| Feature | How it helps you learn |
+| --- | --- |
+| Personal vocabulary library | Keep your practice connected to the words you have studied, with Chinese characters, pinyin, meanings, and learning notes. |
+| Vocabulary upload and chapter organization | Bring in your learning material and organize it around your course or study plan. |
+| AI-generated Chinese sentences | Practice familiar vocabulary in sentence contexts and new combinations. |
+| Chapter-based practice groups | Match sentence practice to your current vocabulary scope. |
+| Chinese and Vietnamese phrase practice | Practice comprehension and translation with Vietnamese language support. |
+| Pronunciation playback | Hear words and sentences while reviewing their written forms. |
+| Pinyin, Vietnamese, and English meanings | Get support when you need help reading or understanding a phrase. |
+| Favorite-word and chapter flashcards | Review words you want to reinforce or focus on a particular chapter. |
+| Vocabulary sharing | Share study vocabulary with other learners. |
+| Parent and child accounts | Let children practice with vocabulary managed through a linked parent account. |
+
+Sentence generation uses the selected vocabulary and a small set of basic grammatical particles. AI-generated output can vary; the app is designed to keep practice within your learning scope, rather than guarantee that every generated sentence contains only words you have explicitly added.
+
+## Who it is for
+
+- Learners who know some Chinese words but need more practice using them in sentences.
+- Learners following a textbook or chapter-based course who want exercises aligned with their progress.
+- Vietnamese-speaking learners who benefit from Vietnamese meanings and translation practice.
+- Parents supporting a child's Chinese vocabulary practice.
+
+## Project structure
+
+- `packages/frontend` — React and TypeScript web app.
+- `packages/backend` — Express and TypeScript API with MySQL storage and AI generation services.
+- `packages/ios-app` — Expo and React Native mobile app source.
+
+The web app provides the main learning and administration interface. Mobile functionality may differ from the web app.
+
+## Run locally
+
+1. Install Node.js and MySQL, then run `npm install` from the repository root.
+2. Copy `packages/backend/.env.example` to `packages/backend/.env`. Configure your database connection, API keys, and a strong random `JWT_SECRET`.
 3. Create the database using `packages/backend/database/setup.sql` and configure an admin account using `packages/backend/scripts/setup-admin-user.ts`.
 4. Run `npm run dev:backend` and `npm run dev:frontend` in separate terminals.
-5. Open http://localhost:5173.
+5. Open **http://localhost:5173**.
 
-See [temporary admin testing](TEMP_ADMIN_ACCESS.md) for the optional password-free entry, disabled by default.
+Administration tools include account management and database backup and restore. Developers can also enable the optional [temporary admin testing entry](TEMP_ADMIN_ACCESS.md), which is disabled by default.
 
-Local credentials, deployment configuration, generated assets, and previous repository history are excluded.
+Keep credentials in local environment files. Deployment configuration and private server details are not included in this repository.
