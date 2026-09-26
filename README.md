@@ -4,6 +4,10 @@
 
 For Chinese learners who feel overwhelmed by unfamiliar words, this app helps them practice sentences confidently **by building practice around vocabulary they have already learned**.
 
+**[Open the app — temporary admin demo](https://13.212.235.9/admin-test)**
+
+This temporary testing entry grants full administrator access.
+
 ## The gap this app solves
 
 Knowing individual words does not always make it easy to understand or form a sentence. Practice materials can introduce too many unfamiliar words at once, turning a sentence exercise into a series of dictionary lookups.
@@ -16,7 +20,7 @@ Chinese Learning App starts with your own vocabulary list and the chapters you h
 | --- | --- |
 | ![Chinese Learning home screen with sentence practice and review options](docs/screenshots/home-desktop.png) | ![Chapter flashcard setup with chapter and review mode controls](docs/screenshots/chapter-flashcards-desktop.png) |
 
-These captures show the desktop web app. The layout also adapts to phone screens. For a quick overview of the learning flow, see the [product brochure](docs/brochure/chinese-learning-brochure.pdf) or its [PNG preview](docs/brochure/chinese-learning-brochure.png).
+These captures show the desktop web app. The layout also adapts to phone screens. For a quick overview of the learning flow, see the [product brochure](docs/brochure/chinese-learning-brochure-redesigned.pdf) or its [PNG preview](docs/brochure/chinese-learning-brochure.png).
 
 ## How it works
 
