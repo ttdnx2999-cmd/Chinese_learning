@@ -10,6 +10,14 @@ Knowing individual words does not always make it easy to understand or form a se
 
 Chinese Learning App starts with your own vocabulary list and the chapters you have studied. The goal is to make it easier to use familiar words in new combinations, build sentence comprehension, and practice without feeling overwhelmed.
 
+## See the app
+
+| Learning home | Chapter flashcards |
+| --- | --- |
+| ![Chinese Learning home screen with sentence practice and review options](docs/screenshots/home-desktop.png) | ![Chapter flashcard setup with chapter and review mode controls](docs/screenshots/chapter-flashcards-desktop.png) |
+
+These captures show the desktop web app. The layout also adapts to phone screens. For a quick overview of the learning flow, see the [product brochure](docs/brochure/chinese-learning-brochure.pdf) or its [PNG preview](docs/brochure/chinese-learning-brochure.png).
+
 ## How it works
 
 1. **Add the words you have learned.** Upload or manage your vocabulary and organize it by chapter.
